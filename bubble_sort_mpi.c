@@ -4,7 +4,7 @@ Data: 28/09/2022
 Ultima atualiazacao: 03/10/2022
 
 Powershell 7
-clear && mpicc main_bubble_sort.c -o main_bubble_sort.bin && mpirun -np 4 --oversubscribe main_bubble_sort.bin ./unsorted_numbers.txt ./sorted_numbers.txt
+clear && mpicc bubble_sort_mpi.c -o bubble_sort_mpi.bin && mpirun -np 4 --oversubscribe bubble_sort_mpi.bin ./unsorted_numbers.txt ./sorted_numbers.txt
 */
 
 
