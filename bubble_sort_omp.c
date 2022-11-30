@@ -4,7 +4,7 @@ Data: 23/11/2022
 Ultima atualiazacao: 26/11/2022
 
 Powershell 7
-clear && gcc -O2 bubble_sort_omp.c -o bubble_sort_omp.bin -fopenmp && .\bubble_sort_omp.bin unsorted_numbers.txt sorted_numbers.txt
+clear && gcc -O2 bubble_sort_omp.c -o bubble_sort_omp.bin -fopenmp && [void]($Env:OMP_NUM_THREADS = 4) && .\bubble_sort_omp.bin unsorted_numbers.txt sorted_numbers.txt
 */
 
 
@@ -21,7 +21,6 @@ clear && gcc -O2 bubble_sort_omp.c -o bubble_sort_omp.bin -fopenmp && .\bubble_s
 // =============================================================================
 // SECTION - GLOBALS
 typedef int ARRAY_DATA_TYPE;
-#define NUM_THREADS_DESIRED 4
 
 // !SECTION
 
@@ -242,7 +241,7 @@ void parallelOddEvenBubbleSort(
 	for (size_t i=0;i<nChunks;i++) {
 		if (i%2==0) {  // NOTE - iterations x,_,...,x,_
 		// process chunks ((0,1),(2,3),...,(nThreads-2,nThreads-1))
-			omp_set_num_threads(nThreads);
+			omp_set_num_threads(nThreads);  // explicitly set the num of threads [unnecessary]
 			#pragma omp parallel for schedule(static)
 			for (size_t tId=0;tId<nThreads;tId++) {
 				size_t chunkStart = tArrayStart(tId*2, nChunks, nOriginal);
@@ -252,7 +251,7 @@ void parallelOddEvenBubbleSort(
 		}
 		else {  // NOTE - iterations _,x,...,_,x
 		// process chunks ((1,2),(3,4),...,(nThreads-3,nThreads-2))
-			omp_set_num_threads(nThreads);
+			omp_set_num_threads(nThreads);  // explicitly set the num of threads [unnecessary]
 			#pragma omp parallel for schedule(static)
 			for (size_t tId=0;tId<nThreads+(nChunks%2-1);tId++) {
 				size_t chunkStart = tArrayStart(tId*2+1, nChunks, nOriginal);
@@ -329,11 +328,20 @@ int clamp(int x, int min, int max)
 // --------------------
 int main(int argc, char **argv)
 {
+	int nThreads;
 	size_t nOriginal;
 	ARRAY_DATA_TYPE *theData;
 	ARRAY_DATA_TYPE *sortedData;  // NOTE - only pMain use it
-	size_t nData;
+	char *inputFilePath=argv[1];
+	char *outputFilePath=argv[2];
 	// ----------
+	// NOTE - getting from environment OMP_NUM_THREADS
+	omp_set_dynamic(0);
+	#pragma omp parallel
+	{
+	#pragma omp single
+	nThreads = omp_get_num_threads();
+	}
 	if (argc<3) {
 		puts(
 			"Expected 2 arguments:\n"
@@ -349,16 +357,17 @@ int main(int argc, char **argv)
 			"\tcount lines, now sorted, each with a integer.");
 		return 1;
 	}
-	char *inputFilePath=argv[1];
-	char *outputFilePath=argv[2];
-
 
 	// NOTE - load the data
 	loadData(inputFilePath, &nOriginal, &theData);
-	int nThreads = NUM_THREADS_DESIRED;
 
 	// NOTE - sort the data
-	parallelOddEvenBubbleSort(theData, nOriginal, nThreads, compareDataElements);
+	if (nThreads==1) {
+		sequentialOddEvenBubbleSort(theData,nOriginal,compareDataElements);
+	}
+	else if (nThreads>1) {
+		parallelOddEvenBubbleSort(theData, nOriginal, nThreads, compareDataElements);
+	}
 
 	// NOTE - check the result
 	bool sorted = checkSorting(theData,nOriginal,sizeof(ARRAY_DATA_TYPE),compareDataElements);
