@@ -1,7 +1,7 @@
 /*
 Escrito por: Gabriel Borba
 Data: 23/11/2022
-Ultima atualiazacao: 26/11/2022
+Ultima atualiazacao: 30/11/2022
 
 Powershell 7
 clear && gcc -O2 bubble_sort_omp.c -o bubble_sort_omp.bin -fopenmp && [void]($Env:OMP_NUM_THREADS = 4) && .\bubble_sort_omp.bin unsorted_numbers.txt sorted_numbers.txt
