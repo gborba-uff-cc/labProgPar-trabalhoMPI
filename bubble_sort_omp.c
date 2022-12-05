@@ -236,12 +236,17 @@ void parallelOddEvenBubbleSort(
 		exit(1);
 	}
 
-	// NOTE - split the data on chunks  |  |  |...|  |  |
-	size_t nChunks = 2*nThreads;  // at least 1 element per chunk
+	/* NOTE - split the data on chunks  |  |  |...|  |  |
+	 each chunk has at least 1 element */
+	size_t nChunks = 2*nThreads;
 	for (size_t i=0;i<nChunks;i++) {
-		if (i%2==0) {  // NOTE - iterations x,_,...,x,_
-		// process chunks ((0,1),(2,3),...,(nThreads-2,nThreads-1))
-			omp_set_num_threads(nThreads);  // explicitly set the num of threads [unnecessary]
+		/* NOTE - iterations x,_,...,x,_
+		 processing chunks ((0,1),(2,3),...,(nChunks-2,nChunks-1)) */
+		if (i%2==0) {
+			/* NOTE - explicitly set the num of threads [unnecessary because the
+			 number of threads is rerad fom env] */
+			omp_set_num_threads(nThreads);
+			// NOTE - using parallel for to give a thread id to each thread
 			#pragma omp parallel for schedule(static)
 			for (size_t tId=0;tId<nThreads;tId++) {
 				size_t chunkStart = tArrayStart(tId*2, nChunks, nOriginal);
@@ -249,9 +254,13 @@ void parallelOddEvenBubbleSort(
 				qsort(&anArr[chunkStart], chunkSize, sizeof(ARRAY_DATA_TYPE), cmpFunction);
 			}
 		}
-		else {  // NOTE - iterations _,x,...,_,x
-		// process chunks ((1,2),(3,4),...,(nThreads-3,nThreads-2))
-			omp_set_num_threads(nThreads);  // explicitly set the num of threads [unnecessary]
+		/* NOTE - iterations _,x,...,_,x
+		 processing chunks ((1,2),(3,4),...,(nChunks-3,nChunks-2)) */
+		else {
+			/* NOTE - explicitly set the num of threads [unnecessary because the
+			 number of threads is read fom env] */
+			omp_set_num_threads(nThreads);
+			// NOTE - using parallel for to give a thread id to each thread
 			#pragma omp parallel for schedule(static)
 			for (size_t tId=0;tId<nThreads+(nChunks%2-1);tId++) {
 				size_t chunkStart = tArrayStart(tId*2+1, nChunks, nOriginal);
